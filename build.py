@@ -175,9 +175,10 @@ def makeinstall(cwd, target='install'):
 
     if platform.system() == 'Windows':
         verbose_flag = '-v:detailed' if FLAGS.verbose else '-v:normal'
+        buildtype_flag = '-p:Configuration={}'.format(FLAGS.build_type)
         p = subprocess.Popen([
             'msbuild.exe', '-m:{}'.format(str(FLAGS.build_parallel)),
-            verbose_flag, '{}.vcxproj'.format(target)
+            verbose_flag, buildtype_flag, '{}.vcxproj'.format(target)
         ],
                              cwd=cwd)
     else:
@@ -253,6 +254,13 @@ def core_cmake_args(components, backends, install_dir):
                 fail('unknown core backend {}'.format(be))
 
     cargs.append('-DTRITON_EXTRA_LIB_PATHS=/opt/tritonserver/lib')
+
+    # If TRITONBUILD_CMAKE_TOOLCHAIN_FILE is defined in the env then
+    # we use it to set CMAKE_TOOLCHAIN_FILE.
+    if 'TRITONBUILD_CMAKE_TOOLCHAIN_FILE' in os.environ:
+        cargs.append('-DCMAKE_TOOLCHAIN_FILE={}'.format(
+            os.environ['TRITONBUILD_CMAKE_TOOLCHAIN_FILE']))
+
     cargs.append('/workspace/build')
     return cargs
 
@@ -291,6 +299,12 @@ def backend_cmake_args(images, components, be, install_dir):
 
     cargs.append('-DTRITON_ENABLE_GPU:BOOL={}'.format(
         cmake_enable(FLAGS.enable_gpu)))
+
+    # If TRITONBUILD_CMAKE_TOOLCHAIN_FILE is defined in the env then
+    # we use it to set CMAKE_TOOLCHAIN_FILE.
+    if 'TRITONBUILD_CMAKE_TOOLCHAIN_FILE' in os.environ:
+        cargs.append('-DCMAKE_TOOLCHAIN_FILE={}'.format(
+            os.environ['TRITONBUILD_CMAKE_TOOLCHAIN_FILE']))
 
     cargs.append('..')
     return cargs
@@ -507,7 +521,7 @@ RUN git clone --depth=1 --single-branch -b 2020.11-1 https://github.com/microsof
 WORKDIR /vcpkg/vcpkg
 RUN bootstrap-vcpkg.bat
 RUN vcpkg.exe update
-RUN vcpkg.exe install rapidjson:x64-windows re2:x64-windows boost-interprocess:x64-windows
+RUN vcpkg.exe install openssl:x64-windows openssl-windows:x64-windows rapidjson:x64-windows re2:x64-windows boost-interprocess:x64-windows
 
 WORKDIR /workspace
 RUN pip3 install --upgrade wheel setuptools docker
@@ -659,12 +673,17 @@ RUN cd /opt/tritonserver/backends/onnxruntime && \
     # Copy in the triton source. We remove existing contents first
     # incase the FROM container has something there already. On
     # windows it is important that the entrypoint initialize
-    # VisualStudio environment otherwise the build will fail.
+    # VisualStudio environment otherwise the build will fail. Also set
+    # TRITONBUILD_CMAKE_TOOLCHAIN_FILE within the build container so
+    # that later when we run cmake that we can point to the packages
+    # installed by vcpkg.
     if platform.system() == 'Windows':
         df += '''
 WORKDIR /workspace
 RUN rmdir /S/Q * || exit 0
 COPY . .
+
+ENV TRITONBUILD_CMAKE_TOOLCHAIN_FILE /vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake
 ENTRYPOINT C:\BuildTools\Common7\Tools\VsDevCmd.bat &&
 '''
     else:

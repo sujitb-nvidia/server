@@ -521,7 +521,7 @@ RUN git clone --depth=1 --single-branch -b 2020.11-1 https://github.com/microsof
 WORKDIR /vcpkg/vcpkg
 RUN bootstrap-vcpkg.bat
 RUN vcpkg.exe update
-RUN vcpkg.exe install openssl:x64-windows openssl-windows:x64-windows rapidjson:x64-windows re2:x64-windows boost-interprocess:x64-windows
+RUN vcpkg.exe install openssl:x64-windows openssl-windows:x64-windows rapidjson:x64-windows re2:x64-windows boost-interprocess:x64-windows zlib:x64-windows
 
 WORKDIR /workspace
 RUN pip3 install --upgrade wheel setuptools docker

@@ -513,8 +513,12 @@ ADD https://aka.ms/vs/16/release/vs_buildtools.exe /tmp/vs_buildtools.exe
 ADD https://aka.ms/vs/16/release/channel /tmp/VisualStudio.chman
 RUN /tmp/vs_buildtools.exe --quiet --wait --norestart --nocache --installPath C:\\BuildTools --channelUri C:\\tmp\\VisualStudio.chman --installChannelUri C:\\tmp\\VisualStudio.chman --add Microsoft.VisualStudio.Workload.VCTools;includeRecommended --add Microsoft.Component.MSBuild || IF "%ERRORLEVEL%"=="3010" EXIT 0
 
-# Git and Python3
-RUN powershell.exe -ExecutionPolicy RemoteSigned iex (new-object net.webclient).downloadstring('https://get.scoop.sh'); scoop install python git cmake docker
+# Specific cmake version is needed to avoid find_package(zlib) failure
+# when building grpc
+RUN powershell.exe -ExecutionPolicy RemoteSigned iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
+RUN scoop install python git docker
+RUN scoop install cmake@3.18.2
+RUN cmake -version
 
 WORKDIR /vcpkg
 RUN git clone --depth=1 --single-branch -b 2020.11-1 https://github.com/microsoft/vcpkg.git
@@ -675,10 +679,10 @@ RUN cd /opt/tritonserver/backends/onnxruntime && \
     # incase the FROM container has something there already. On
     # windows it is important that the entrypoint initialize
     # VisualStudio environment otherwise the build will fail. Also set
-    # TRITONBUILD_CMAKE_TOOLCHAIN_FILE and
-    # TRITONBUILD_OPENSSL_ROOT_DIR within the build container so that
-    # later when we run cmake that we can point to the packages
-    # installed by vcpkg.
+    # TRITONBUILD_CMAKE_TOOLCHAIN_FILE, VCPKG_TARGET_TRIPLET,
+    # TRITONBUILD_ZLIB_ROOT and TRITONBUILD_OPENSSL_ROOT_DIR within
+    # the build container so that later when we run cmake that we can
+    # point to the packages installed by vcpkg.
     if platform.system() == 'Windows':
         df += '''
 WORKDIR /workspace
@@ -686,7 +690,9 @@ RUN rmdir /S/Q * || exit 0
 COPY . .
 
 ENV TRITONBUILD_CMAKE_TOOLCHAIN_FILE /vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake
+ENV TRITONBUILD_VCPKG_TARGET_TRIPLET x64-windows
 ENV TRITONBUILD_OPENSSL_ROOT_DIR /vcpkg/vcpkg/installed/x64-windows
+ENV TRITONBUILD_ZLIB_ROOT /vcpkg/vcpkg/installed/x64-windows
 ENTRYPOINT C:\BuildTools\Common7\Tools\VsDevCmd.bat &&
 '''
     else:

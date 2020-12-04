@@ -522,6 +522,7 @@ WORKDIR /vcpkg/vcpkg
 RUN bootstrap-vcpkg.bat
 RUN vcpkg.exe update
 RUN vcpkg.exe install openssl:x64-windows openssl-windows:x64-windows rapidjson:x64-windows re2:x64-windows boost-interprocess:x64-windows zlib:x64-windows
+RUN vcpkg.exe integrate install
 
 WORKDIR /workspace
 RUN pip3 install --upgrade wheel setuptools docker

@@ -1218,7 +1218,6 @@ if __name__ == '__main__':
         help='Minimum CUDA compute capability supported by server.')
 
     parser.add_argument(
-        '-e',
         '--endpoint',
         action='append',
         required=False,
@@ -1233,7 +1232,6 @@ if __name__ == '__main__':
         'Include specified filesystem in build. Allowed values are "gcs", "azure_storage" and "s3".'
     )
     parser.add_argument(
-        '-b',
         '--backend',
         action='append',
         required=False,
@@ -1241,7 +1239,6 @@ if __name__ == '__main__':
         'Include specified backend in build as <backend-name>[:<repo-tag>]. If <repo-tag> starts with "pull/" then it refers to a pull-request reference, otherwise <repo-tag> indicates the git tag/branch to use for the build, default is "main".'
     )
     parser.add_argument(
-        '-r',
         '--repo-tag',
         action='append',
         required=False,

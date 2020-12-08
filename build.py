@@ -261,7 +261,10 @@ def core_cmake_args(components, backends, install_dir):
         if evar.startswith('TRITONBUILD_'):
             cargs.append('-D{}={}'.format(evar[len('TRITONBUILD_'):], eval))
 
-    cargs.append('/workspace/build')
+    if platform.system() == 'Windows':
+        cargs.append('c:/workspace/build')
+    else:
+        cargs.append('/workspace/build')
     return cargs
 
 

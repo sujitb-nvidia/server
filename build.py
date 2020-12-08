@@ -526,7 +526,7 @@ RUN cmake -version
 WORKDIR /vcpkg
 RUN git clone --depth=1 --single-branch -b 2020.11-1 https://github.com/microsoft/vcpkg.git
 WORKDIR /vcpkg/vcpkg
-RUN bootstrap-vcpkg.bat
+RUN C:/BuildTools/Common7/Tools/VsDevCmd.bat; bootstrap-vcpkg.bat
 RUN vcpkg.exe update
 RUN vcpkg.exe install openssl:x64-windows openssl-windows:x64-windows rapidjson:x64-windows re2:x64-windows boost-interprocess:x64-windows zlib:x64-windows
 RUN vcpkg.exe integrate install
